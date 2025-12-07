@@ -13,18 +13,112 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Game state
 const rooms = new Map();
 
-// Sample prompts
+// Prompts organized by category
 const prompts = [
+  // Food & Drink
   "Name a popular pizza topping",
-  "Name a color of the rainbow",
-  "Name a pet that people keep at home",
   "Name a fruit that's yellow",
+  "Name a vegetable that's green",
+  "Name a fast food restaurant",
+  "Name a flavor of ice cream",
+  "Name something you put on a sandwich",
+  "Name a breakfast food",
+  "Name a type of pasta",
+  "Name a dessert",
+  "Name a type of cheese",
+  "Name a soft drink",
+  "Name a type of candy",
+
+  // Animals
+  "Name a pet that people keep at home",
+  "Name an animal you'd see at a zoo",
+  "Name an animal that lives in the ocean",
+  "Name a bird",
+  "Name an insect",
+  "Name an animal with stripes",
+  "Name an animal that's dangerous",
+  "Name a farm animal",
+
+  // Entertainment
   "Name a superhero",
-  "Name something you find in a kitchen",
+  "Name a Disney movie",
+  "Name a TV show everyone has seen",
+  "Name a famous singer",
+  "Name a video game",
+  "Name a board game",
+  "Name a musical instrument",
+  "Name a movie genre",
+  "Name a famous actor",
+  "Name a social media platform",
+
+  // Sports & Activities
   "Name a sport played with a ball",
-  "Name a month of the year",
+  "Name an Olympic sport",
+  "Name something you do at the gym",
+  "Name a hobby",
+  "Name a water sport",
+  "Name a card game",
+
+  // Places
+  "Name a country in Europe",
+  "Name a US state",
+  "Name a famous city",
+  "Name somewhere you'd go on vacation",
+  "Name a place in a house",
+  "Name something you find in a kitchen",
+  "Name something in a bathroom",
+  "Name a type of store",
+
+  // Nature & Weather
+  "Name a color of the rainbow",
   "Name a type of weather",
-  "Name something you'd bring to the beach"
+  "Name a flower",
+  "Name a tree",
+  "Name something in the sky",
+  "Name a season",
+
+  // Time & Occasions
+  "Name a month of the year",
+  "Name a day of the week",
+  "Name a holiday",
+  "Name something you'd bring to a party",
+  "Name something you'd bring to the beach",
+
+  // Objects & Things
+  "Name something in your pocket or purse",
+  "Name a piece of furniture",
+  "Name something with buttons",
+  "Name something you plug in",
+  "Name a type of shoe",
+  "Name something you wear on your head",
+  "Name a vehicle",
+  "Name a tool",
+
+  // School & Work
+  "Name a school subject",
+  "Name something in an office",
+  "Name a profession",
+  "Name something a teacher says",
+
+  // Miscellaneous
+  "Name something that's cold",
+  "Name something that's hot",
+  "Name something you're afraid of",
+  "Name something you do every morning",
+  "Name something you lose often",
+  "Name a bad habit",
+  "Name something that smells good",
+  "Name a reason to call in sick",
+  "Name something you save up to buy",
+  "Name a New Year's resolution"
+];
+
+// Avatar options
+const avatars = ['🦊', '🐸', '🦉', '🐙', '🦋', '🐢', '🦁', '🐼', '🐨', '🦄', '🐯', '🐮'];
+const colors = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
+  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
+  '#BB8FCE', '#85C1E9', '#F8B500', '#58D68D'
 ];
 
 function generateRoomCode() {
@@ -34,6 +128,37 @@ function generateRoomCode() {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
+}
+
+function getPlayerAppearance(room) {
+  const usedAvatars = new Set();
+  const usedColors = new Set();
+
+  for (const player of room.players.values()) {
+    usedAvatars.add(player.avatar);
+    usedColors.add(player.color);
+  }
+
+  let avatar = avatars[Math.floor(Math.random() * avatars.length)];
+  let color = colors[Math.floor(Math.random() * colors.length)];
+
+  // Try to find unused avatar
+  for (const a of avatars) {
+    if (!usedAvatars.has(a)) {
+      avatar = a;
+      break;
+    }
+  }
+
+  // Try to find unused color
+  for (const c of colors) {
+    if (!usedColors.has(c)) {
+      color = c;
+      break;
+    }
+  }
+
+  return { avatar, color };
 }
 
 function getRandomPrompt(usedPrompts) {
@@ -106,26 +231,40 @@ io.on('connection', (socket) => {
       state: 'lobby', // lobby, playing, results
       currentPrompt: null,
       usedPrompts: [],
-      round: 0
+      round: 0,
+      settings: {
+        timer: 30,        // seconds (10, 30, 60)
+        pointsToWin: 10   // points needed to win
+      },
+      timerInterval: null
     };
 
+    const { avatar, color } = getPlayerAppearance(room);
     room.players.set(socket.id, {
       name: playerName,
       score: 0,
-      currentAnswer: null
+      currentAnswer: null,
+      avatar,
+      color
     });
 
     rooms.set(code, room);
     socket.join(code);
     socket.roomCode = code;
 
-    socket.emit('roomCreated', { code, players: [{ id: socket.id, name: playerName, score: 0 }] });
+    const player = room.players.get(socket.id);
+    socket.emit('roomCreated', {
+      code,
+      players: [{ id: socket.id, name: playerName, score: 0, avatar, color }],
+      settings: room.settings
+    });
     console.log(`Room ${code} created by ${playerName}`);
   });
 
   // Join an existing room
   socket.on('joinRoom', ({ code, playerName }) => {
-    const room = rooms.get(code.toUpperCase());
+    const upperCode = code.toUpperCase();
+    const room = rooms.get(upperCode);
 
     if (!room) {
       socket.emit('error', 'Room not found');
@@ -137,25 +276,79 @@ io.on('connection', (socket) => {
       return;
     }
 
+    const { avatar, color } = getPlayerAppearance(room);
     room.players.set(socket.id, {
       name: playerName,
       score: 0,
-      currentAnswer: null
+      currentAnswer: null,
+      avatar,
+      color
     });
 
-    socket.join(code);
-    socket.roomCode = code;
+    socket.join(upperCode);
+    socket.roomCode = upperCode;
 
     const playerList = Array.from(room.players).map(([id, p]) => ({
       id,
       name: p.name,
-      score: p.score
+      score: p.score,
+      avatar: p.avatar,
+      color: p.color
     }));
 
-    io.to(code).emit('playerJoined', { players: playerList });
-    socket.emit('joinedRoom', { code, players: playerList, isHost: false });
-    console.log(`${playerName} joined room ${code}`);
+    io.to(upperCode).emit('playerJoined', { players: playerList });
+    socket.emit('joinedRoom', { code: upperCode, players: playerList, isHost: false, settings: room.settings });
+    console.log(`${playerName} joined room ${upperCode}`);
   });
+
+  // Update game settings (host only)
+  socket.on('updateSettings', (settings) => {
+    const room = rooms.get(socket.roomCode);
+    if (!room || room.host !== socket.id) return;
+
+    if (settings.timer) {
+      room.settings.timer = settings.timer;
+    }
+    if (settings.pointsToWin) {
+      room.settings.pointsToWin = settings.pointsToWin;
+    }
+
+    io.to(socket.roomCode).emit('settingsUpdated', room.settings);
+  });
+
+  // Helper to start a round with timer
+  function startRoundWithTimer(room, roomCode) {
+    // Clear any existing timer
+    if (room.timerInterval) {
+      clearInterval(room.timerInterval);
+    }
+
+    let timeLeft = room.settings.timer;
+    room.timerInterval = setInterval(() => {
+      timeLeft--;
+      io.to(roomCode).emit('timerTick', { timeLeft });
+
+      if (timeLeft <= 0) {
+        clearInterval(room.timerInterval);
+        room.timerInterval = null;
+
+        // Force end the round
+        if (room.state === 'playing') {
+          room.state = 'results';
+          const { results, herdAnswer, herdCount } = calculateScores(room);
+          const winner = results.find(r => r.score >= room.settings.pointsToWin);
+
+          io.to(roomCode).emit('roundResults', {
+            results,
+            herdAnswer,
+            herdCount,
+            round: room.round,
+            winner: winner || null
+          });
+        }
+      }
+    }, 1000);
+  }
 
   // Start the game (host only)
   socket.on('startGame', () => {
@@ -179,8 +372,11 @@ io.on('connection', (socket) => {
 
     io.to(socket.roomCode).emit('gameStarted', {
       prompt: room.currentPrompt,
-      round: room.round
+      round: room.round,
+      timer: room.settings.timer
     });
+
+    startRoundWithTimer(room, socket.roomCode);
   });
 
   // Submit an answer
@@ -189,7 +385,7 @@ io.on('connection', (socket) => {
     if (!room || room.state !== 'playing') return;
 
     const player = room.players.get(socket.id);
-    if (!player) return;
+    if (!player || player.currentAnswer) return; // Already answered
 
     player.currentAnswer = answer;
 
@@ -210,13 +406,22 @@ io.on('connection', (socket) => {
     });
 
     if (allAnswered) {
+      // Clear the timer
+      if (room.timerInterval) {
+        clearInterval(room.timerInterval);
+        room.timerInterval = null;
+      }
+
       room.state = 'results';
       const { results, herdAnswer, herdCount } = calculateScores(room);
+      const winner = results.find(r => r.score >= room.settings.pointsToWin);
+
       io.to(socket.roomCode).emit('roundResults', {
         results,
         herdAnswer,
         herdCount,
-        round: room.round
+        round: room.round,
+        winner: winner || null
       });
     }
   });
@@ -238,8 +443,37 @@ io.on('connection', (socket) => {
 
     io.to(socket.roomCode).emit('newRound', {
       prompt: room.currentPrompt,
-      round: room.round
+      round: room.round,
+      timer: room.settings.timer
     });
+
+    startRoundWithTimer(room, socket.roomCode);
+  });
+
+  // Play again (host only) - reset scores and start fresh
+  socket.on('playAgain', () => {
+    const room = rooms.get(socket.roomCode);
+    if (!room || room.host !== socket.id) return;
+
+    // Reset all scores
+    for (const player of room.players.values()) {
+      player.score = 0;
+      player.currentAnswer = null;
+    }
+
+    room.state = 'lobby';
+    room.round = 0;
+    room.usedPrompts = [];
+
+    const playerList = Array.from(room.players).map(([id, p]) => ({
+      id,
+      name: p.name,
+      score: p.score,
+      avatar: p.avatar,
+      color: p.color
+    }));
+
+    io.to(socket.roomCode).emit('gameReset', { players: playerList, settings: room.settings });
   });
 
   // Handle disconnect
@@ -251,6 +485,10 @@ io.on('connection', (socket) => {
     room.players.delete(socket.id);
 
     if (room.players.size === 0) {
+      // Clean up timer
+      if (room.timerInterval) {
+        clearInterval(room.timerInterval);
+      }
       rooms.delete(socket.roomCode);
       console.log(`Room ${socket.roomCode} deleted (empty)`);
     } else {
@@ -263,7 +501,9 @@ io.on('connection', (socket) => {
       const playerList = Array.from(room.players).map(([id, p]) => ({
         id,
         name: p.name,
-        score: p.score
+        score: p.score,
+        avatar: p.avatar,
+        color: p.color
       }));
 
       io.to(socket.roomCode).emit('playerLeft', {

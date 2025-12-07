@@ -42,13 +42,45 @@
         <ul id="player-list"></ul>
       </div>
 
+      <!-- Settings (host only) -->
+      <div id="settings-section" class="settings-section hidden">
+        <h3>Game Settings</h3>
+        <div class="setting-row">
+          <label>Timer:</label>
+          <div class="setting-options">
+            <button class="setting-btn" data-timer="10">10s</button>
+            <button class="setting-btn active" data-timer="30">30s</button>
+            <button class="setting-btn" data-timer="60">60s</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label>Points to Win:</label>
+          <div class="setting-options">
+            <button class="setting-btn" data-points="5">5</button>
+            <button class="setting-btn active" data-points="10">10</button>
+            <button class="setting-btn" data-points="15">15</button>
+            <button class="setting-btn" data-points="20">20</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="settings-display" class="settings-display hidden">
+        <span id="timer-display">30s timer</span> | <span id="points-display">First to 10</span>
+      </div>
+
       <button id="start-btn" class="btn primary hidden">Start Game</button>
       <p id="waiting-msg" class="hidden">Waiting for host to start...</p>
     </div>
 
     <!-- Game Screen -->
     <div id="game-screen" class="screen">
-      <div class="round-info">Round <span id="round-number">1</span></div>
+      <div class="game-header">
+        <div class="round-info">Round <span id="round-number">1</span></div>
+        <div class="timer-display">
+          <span id="timer-value">30</span>s
+        </div>
+      </div>
+
       <div class="prompt-box">
         <p id="prompt-text"></p>
       </div>
@@ -91,6 +123,24 @@
 
       <button id="next-round-btn" class="btn primary hidden">Next Round</button>
       <p id="waiting-next-msg" class="hidden">Waiting for host...</p>
+    </div>
+
+    <!-- Winner Screen -->
+    <div id="winner-screen" class="screen">
+      <div class="winner-content">
+        <h2>Game Over!</h2>
+        <div class="winner-avatar" id="winner-avatar"></div>
+        <h3 id="winner-name"></h3>
+        <p class="winner-score">wins with <span id="winner-score"></span> points!</p>
+
+        <div class="final-scores">
+          <h4>Final Scores</h4>
+          <ul id="final-scores-list"></ul>
+        </div>
+
+        <button id="play-again-btn" class="btn primary hidden">Play Again</button>
+        <p id="waiting-play-again" class="hidden">Waiting for host...</p>
+      </div>
     </div>
 
     <!-- Error Toast -->
