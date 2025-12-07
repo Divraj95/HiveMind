@@ -3,28 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HiveMind</title>
+  <title>HiveMind - Think Like the Swarm!</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Sound Toggle -->
+  <button id="sound-toggle" class="sound-toggle" title="Toggle Sound">🔊</button>
+
   <div class="container">
     <!-- Home Screen -->
     <div id="home-screen" class="screen active">
       <h1>HiveMind</h1>
-      <p class="subtitle">Think like the herd!</p>
+      <p class="subtitle">Think like the swarm! 🍯</p>
 
       <div class="form-group">
         <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
       </div>
 
       <div class="button-group">
-        <button id="create-btn" class="btn primary">Create Game</button>
-        <button id="join-btn" class="btn secondary">Join Game</button>
+        <button id="create-btn" class="btn primary">Create Hive</button>
+        <button id="join-btn" class="btn secondary">Join Hive</button>
       </div>
 
       <div id="join-form" class="hidden">
         <div class="form-group">
-          <input type="text" id="room-code" placeholder="Enter room code" maxlength="4">
+          <input type="text" id="room-code" placeholder="Enter hive code" maxlength="4">
         </div>
         <button id="join-room-btn" class="btn primary">Join</button>
       </div>
@@ -32,19 +35,19 @@
 
     <!-- Lobby Screen -->
     <div id="lobby-screen" class="screen">
-      <h2>Lobby</h2>
+      <h2>The Hive 🐝</h2>
       <div class="room-code">
-        Room Code: <span id="display-code"></span>
+        Hive Code: <span id="display-code"></span>
       </div>
 
       <div class="players-section">
-        <h3>Players</h3>
+        <h3>Bees in the Hive</h3>
         <ul id="player-list"></ul>
       </div>
 
       <!-- Settings (host only) -->
       <div id="settings-section" class="settings-section hidden">
-        <h3>Game Settings</h3>
+        <h3>Hive Settings</h3>
         <div class="setting-row">
           <label>Timer:</label>
           <div class="setting-options">
@@ -68,8 +71,8 @@
         <span id="timer-display">30s timer</span> | <span id="points-display">First to 10</span>
       </div>
 
-      <button id="start-btn" class="btn primary hidden">Start Game</button>
-      <p id="waiting-msg" class="hidden">Waiting for host to start...</p>
+      <button id="start-btn" class="btn primary hidden">Start Swarming!</button>
+      <p id="waiting-msg" class="hidden">Waiting for the Queen to start...</p>
     </div>
 
     <!-- Game Screen -->
@@ -89,11 +92,11 @@
         <div class="form-group">
           <input type="text" id="answer-input" placeholder="Your answer..." maxlength="50">
         </div>
-        <button id="submit-btn" class="btn primary">Submit</button>
+        <button id="submit-btn" class="btn primary">Buzz In!</button>
       </div>
 
       <div id="waiting-section" class="hidden">
-        <p>Waiting for other players...</p>
+        <p>Waiting for other bees...</p>
         <p id="answer-count"></p>
       </div>
     </div>
@@ -102,8 +105,14 @@
     <div id="results-screen" class="screen">
       <h2>Round <span id="results-round">1</span> Results</h2>
 
+      <!-- Queen Bee Alert (shown when someone gets the queen) -->
+      <div id="queen-bee-alert" class="queen-bee-alert hidden">
+        <span class="queen-icon">👑🐝</span>
+        <span class="queen-text" id="queen-bee-text"></span>
+      </div>
+
       <div class="herd-answer">
-        <p>The Herd Said:</p>
+        <p>The Swarm Said:</p>
         <span id="herd-answer-text"></span>
         <span id="herd-count"></span>
       </div>
@@ -112,7 +121,7 @@
         <table id="results-table">
           <thead>
             <tr>
-              <th>Player</th>
+              <th>Bee</th>
               <th>Answer</th>
               <th>Score</th>
             </tr>
@@ -122,24 +131,24 @@
       </div>
 
       <button id="next-round-btn" class="btn primary hidden">Next Round</button>
-      <p id="waiting-next-msg" class="hidden">Waiting for host...</p>
+      <p id="waiting-next-msg" class="hidden">Waiting for Queen Bee...</p>
     </div>
 
     <!-- Winner Screen -->
     <div id="winner-screen" class="screen">
       <div class="winner-content">
-        <h2>Game Over!</h2>
+        <h2>🏆 Hive Champion! 🏆</h2>
         <div class="winner-avatar" id="winner-avatar"></div>
         <h3 id="winner-name"></h3>
         <p class="winner-score">wins with <span id="winner-score"></span> points!</p>
 
         <div class="final-scores">
-          <h4>Final Scores</h4>
+          <h4>Final Standings</h4>
           <ul id="final-scores-list"></ul>
         </div>
 
-        <button id="play-again-btn" class="btn primary hidden">Play Again</button>
-        <p id="waiting-play-again" class="hidden">Waiting for host...</p>
+        <button id="play-again-btn" class="btn primary hidden">Swarm Again!</button>
+        <p id="waiting-play-again" class="hidden">Waiting for Queen Bee...</p>
       </div>
     </div>
 

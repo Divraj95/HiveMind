@@ -192,11 +192,32 @@ function calculateScores(room) {
     }
   }
 
+  // Find unique answers (only 1 person gave that answer) for Queen Bee
+  const uniqueAnswerers = [];
+  for (const [answer, players] of Object.entries(answers)) {
+    if (players.length === 1) {
+      uniqueAnswerers.push(players[0]);
+    }
+  }
+
+  // Queen Bee logic: if someone gave a unique answer, they get the Queen Bee
+  let newQueenBee = null;
+  let previousQueenBee = room.queenBee;
+
+  if (uniqueAnswerers.length > 0) {
+    // Pick a random unique answerer to get the Queen Bee
+    // (In the original game, it's the "worst" unique answer, but we'll just pick randomly)
+    newQueenBee = uniqueAnswerers[Math.floor(Math.random() * uniqueAnswerers.length)];
+    room.queenBee = newQueenBee;
+  }
+
   // Award points to players who matched the herd (only if more than 1 person)
   const results = [];
   for (const [playerId, player] of room.players) {
     const normalized = player.currentAnswer?.toLowerCase().trim();
     const gotPoint = maxCount > 1 && normalized === herdAnswer;
+    const gotQueen = playerId === newQueenBee;
+    const hasQueen = playerId === room.queenBee;
 
     if (gotPoint) {
       player.score += 1;
@@ -207,11 +228,20 @@ function calculateScores(room) {
       name: player.name,
       answer: player.currentAnswer || '(no answer)',
       gotPoint,
+      gotQueen,
+      hasQueen,
       score: player.score
     });
   }
 
-  return { results, herdAnswer, herdCount: maxCount };
+  return {
+    results,
+    herdAnswer,
+    herdCount: maxCount,
+    newQueenBee,
+    previousQueenBee,
+    queenBeeHolder: room.queenBee
+  };
 }
 
 io.on('connection', (socket) => {
@@ -236,7 +266,8 @@ io.on('connection', (socket) => {
         timer: 30,        // seconds (10, 30, 60)
         pointsToWin: 10   // points needed to win
       },
-      timerInterval: null
+      timerInterval: null,
+      queenBee: null      // player ID who holds the Queen Bee
     };
 
     const { avatar, color } = getPlayerAppearance(room);
@@ -335,15 +366,22 @@ io.on('connection', (socket) => {
         // Force end the round
         if (room.state === 'playing') {
           room.state = 'results';
-          const { results, herdAnswer, herdCount } = calculateScores(room);
-          const winner = results.find(r => r.score >= room.settings.pointsToWin);
+          const { results, herdAnswer, herdCount, newQueenBee, queenBeeHolder } = calculateScores(room);
+
+          // Winner must have enough points AND not hold the Queen Bee
+          const winner = results.find(r => r.score >= room.settings.pointsToWin && r.id !== queenBeeHolder);
+
+          // Get Queen Bee holder name for display
+          const queenBeePlayer = newQueenBee ? room.players.get(newQueenBee) : null;
 
           io.to(roomCode).emit('roundResults', {
             results,
             herdAnswer,
             herdCount,
             round: room.round,
-            winner: winner || null
+            winner: winner || null,
+            newQueenBee: newQueenBee ? { id: newQueenBee, name: queenBeePlayer?.name } : null,
+            queenBeeHolder
           });
         }
       }
@@ -413,15 +451,22 @@ io.on('connection', (socket) => {
       }
 
       room.state = 'results';
-      const { results, herdAnswer, herdCount } = calculateScores(room);
-      const winner = results.find(r => r.score >= room.settings.pointsToWin);
+      const { results, herdAnswer, herdCount, newQueenBee, queenBeeHolder } = calculateScores(room);
+
+      // Winner must have enough points AND not hold the Queen Bee
+      const winner = results.find(r => r.score >= room.settings.pointsToWin && r.id !== queenBeeHolder);
+
+      // Get Queen Bee holder name for display
+      const queenBeePlayer = newQueenBee ? room.players.get(newQueenBee) : null;
 
       io.to(socket.roomCode).emit('roundResults', {
         results,
         herdAnswer,
         herdCount,
         round: room.round,
-        winner: winner || null
+        winner: winner || null,
+        newQueenBee: newQueenBee ? { id: newQueenBee, name: queenBeePlayer?.name } : null,
+        queenBeeHolder
       });
     }
   });
@@ -464,6 +509,7 @@ io.on('connection', (socket) => {
     room.state = 'lobby';
     room.round = 0;
     room.usedPrompts = [];
+    room.queenBee = null;  // Reset Queen Bee
 
     const playerList = Array.from(room.players).map(([id, p]) => ({
       id,
