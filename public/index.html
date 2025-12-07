@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HiveMind</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen active">
+      <h1>HiveMind</h1>
+      <p class="subtitle">Think like the herd!</p>
+
+      <div class="form-group">
+        <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+      </div>
+
+      <div class="button-group">
+        <button id="create-btn" class="btn primary">Create Game</button>
+        <button id="join-btn" class="btn secondary">Join Game</button>
+      </div>
+
+      <div id="join-form" class="hidden">
+        <div class="form-group">
+          <input type="text" id="room-code" placeholder="Enter room code" maxlength="4">
+        </div>
+        <button id="join-room-btn" class="btn primary">Join</button>
+      </div>
+    </div>
+
+    <!-- Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+      <h2>Lobby</h2>
+      <div class="room-code">
+        Room Code: <span id="display-code"></span>
+      </div>
+
+      <div class="players-section">
+        <h3>Players</h3>
+        <ul id="player-list"></ul>
+      </div>
+
+      <button id="start-btn" class="btn primary hidden">Start Game</button>
+      <p id="waiting-msg" class="hidden">Waiting for host to start...</p>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+      <div class="round-info">Round <span id="round-number">1</span></div>
+      <div class="prompt-box">
+        <p id="prompt-text"></p>
+      </div>
+
+      <div id="answer-section">
+        <div class="form-group">
+          <input type="text" id="answer-input" placeholder="Your answer..." maxlength="50">
+        </div>
+        <button id="submit-btn" class="btn primary">Submit</button>
+      </div>
+
+      <div id="waiting-section" class="hidden">
+        <p>Waiting for other players...</p>
+        <p id="answer-count"></p>
+      </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen">
+      <h2>Round <span id="results-round">1</span> Results</h2>
+
+      <div class="herd-answer">
+        <p>The Herd Said:</p>
+        <span id="herd-answer-text"></span>
+        <span id="herd-count"></span>
+      </div>
+
+      <div class="results-list">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Answer</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <button id="next-round-btn" class="btn primary hidden">Next Round</button>
+      <p id="waiting-next-msg" class="hidden">Waiting for host...</p>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="error-toast" class="toast hidden"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
